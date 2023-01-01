@@ -9,6 +9,7 @@
     speed is set to 0 at other times, which still isn't pefect due to each
     render executing asynchronously, but it reduces the number of renders, so
     that's an improvement
+- Added a prepare hook to fix builds when installing this fork via a Git URL
 
 Original README proceeds below:
 

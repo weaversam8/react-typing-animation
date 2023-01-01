@@ -21,7 +21,8 @@
     "lint": "eslint --ignore-path .gitignore .",
     "start": "NODE_ENV=development node ./example/webpack-dev-server.js",
     "prebuild": "npm run lint",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "assets-webpack-plugin": "^3.5.1",
