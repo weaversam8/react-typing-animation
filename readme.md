@@ -1,3 +1,17 @@
+# Fork info
+
+- Forked on 1/1/2023
+- Added some optimizations when typing speed is set to 0
+  - Characters / lines to type are copied straight into the text buffer
+    (and straight on the page) if speed is set to 0 at the beginning of
+    the component, or after a `<Reset>`
+  - Text is animated in "sections" instead of character by character when
+    speed is set to 0 at other times, which still isn't pefect due to each
+    render executing asynchronously, but it reduces the number of renders, so
+    that's an improvement
+
+Original README proceeds below:
+
 # React-typing-animation
 
 [![npm version](https://img.shields.io/npm/v/react-typing-animation.svg)](https://npm.im/react-typing-animation) ![Licence](https://img.shields.io/npm/l/react-typing-animation.svg)

@@ -26,7 +26,7 @@ class Typing extends Component {
     if (
       children !== undefined &&
       JSON.stringify(children, getCircularReplacer()) !==
-      JSON.stringify(prevProps.children, getCircularReplacer())
+        JSON.stringify(prevProps.children, getCircularReplacer())
     ) {
       this.resetState();
     }
@@ -52,9 +52,10 @@ class Typing extends Component {
     }
   };
 
-  resetState = async () =>
-    this.updateState({
-      toType: extractText(this.props.children),
+  resetState = async () => {
+    let toType = extractText(this.props.children);
+    let newState = {
+      toType,
       cursor: {
         lineNum: 0,
         charPos: 0,
@@ -64,7 +65,26 @@ class Typing extends Component {
         speed: this.props.speed,
         step: 'char',
       },
-    });
+    };
+
+    // if the speed is set to 0 at the front, go ahead and pop the first
+    // few lines of toType into the text buffer until the speed changes
+    if (newState.cursor.speed === 0) {
+      while (
+        newState.toType &&
+        newState.toType[0] &&
+        newState.toType[0].type &&
+        !newState.toType[0].type.updateCursor &&
+        newState.cursor.numToErase < 1
+      ) {
+        newState.text.push(toType[0]);
+        newState.cursor.lineNum += 1;
+        newState.toType.shift();
+      }
+    }
+
+    this.updateState(newState);
+  };
 
   beginTyping = async () => {
     const cursor = { ...this.state.cursor };
@@ -115,9 +135,15 @@ class Typing extends Component {
 
         await this.updateState({ cursor: { ...cursor, delay: 0 } });
 
-        if (cursor.step === 'char' && cursor.numToErase < 1) {
-          if (toType.length > 0) {
-            await this.typeCharacter();
+        if (cursor.numToErase < 1) {
+          if (cursor.speed === 0) {
+            if (toType.length > 0) {
+              await this.typeSection();
+            }
+          } else if (cursor.step === 'char') {
+            if (toType.length > 0) {
+              await this.typeCharacter();
+            }
           }
         } else {
           await this.erase();
@@ -148,7 +174,29 @@ class Typing extends Component {
 
       await this.updateState({ cursor, text, toType });
 
-      setTimeout(resolve, randomize(cursor.speed));
+      if (cursor.speed === 0) resolve();
+      else setTimeout(resolve, randomize(cursor.speed));
+    });
+
+  typeSection = async () =>
+    new Promise(async (resolve) => {
+      const toType = [...this.state.toType];
+      const text = [...this.state.text];
+      const cursor = { ...this.state.cursor };
+
+      if (text.length - 1 < cursor.lineNum) {
+        text[cursor.lineNum] = '';
+      }
+
+      text[cursor.lineNum] = toType[0];
+      cursor.lineNum += 1;
+      cursor.charPos = 0;
+      toType.shift();
+
+      await this.updateState({ cursor, text, toType });
+
+      if (cursor.speed === 0) resolve();
+      else setTimeout(resolve, randomize(cursor.speed));
     });
 
   erase = async () =>
@@ -190,7 +238,8 @@ class Typing extends Component {
 
       await this.updateState({ cursor, text });
 
-      setTimeout(resolve, randomize(cursor.speed));
+      if (cursor.speed === 0) resolve();
+      else setTimeout(resolve, randomize(cursor.speed));
     });
 
   render() {
